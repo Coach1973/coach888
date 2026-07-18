@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>字級大小對照表｜大樹AI工具箱</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root { --gold:#c8a96e; --dark:#0a0a0a; --dark2:#141414; --line:rgba(200,169,110,.25); }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Noto Sans TC', sans-serif; background:var(--dark); color:#fff; padding:40px 20px 80px; }
+  .wrap { max-width:760px; margin:0 auto; }
+  h1 { font-size:26px; font-weight:900; margin-bottom:6px; }
+  h1 span { color:var(--gold); }
+  .desc { color:rgba(255,255,255,.5); font-size:14px; margin-bottom:36px; line-height:1.7; }
+  .row {
+    display:flex; align-items:baseline; gap:20px; padding:16px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .row .level {
+    flex-shrink:0; width:96px; font-family:monospace; font-size:14px;
+    color:var(--gold); font-weight:700;
+  }
+  .row .sample { flex:1; font-weight:700; line-height:1.4; word-break:break-all; }
+  .back { display:inline-block; margin-top:40px; color:rgba(255,255,255,.5); font-size:14px; text-decoration:none; }
+  .back:hover { color:var(--gold); }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>字級大小<span>對照表</span></h1>
+    <p class="desc">每一行是實際渲染出來的字級大小（單位 px，教練口語「幾級字」= 這裡的 px 數字）。看中意哪一行，直接跟軍師說「這段用 32 級」或「跟這行一樣大」即可。</p>
+
+    <div class="row"><div class="level">12px</div><div class="sample" style="font-size:12px">大樹教練字級對照表範例文字</div></div>
+    <div class="row"><div class="level">14px</div><div class="sample" style="font-size:14px">大樹教練字級對照表範例文字</div></div>
+    <div class="row"><div class="level">16px</div><div class="sample" style="font-size:16px">大樹教練字級對照表範例文字</div></div>
+    <div class="row"><div class="level">18px</div><div class="sample" style="font-size:18px">大樹教練字級對照表範例文字</div></div>
+    <div class="row"><div class="level">20px</div><div class="sample" style="font-size:20px">大樹教練字級對照表範例文字</div></div>
+    <div class="row"><div class="level">22px</div><div class="sample" style="font-size:22px">大樹教練字級對照表範例文字</div></div>
+    <div class="row"><div class="level">24px</div><div class="sample" style="font-size:24px">大樹教練字級對照表</div></div>
+    <div class="row"><div class="level">28px</div><div class="sample" style="font-size:28px">大樹教練字級對照表</div></div>
+    <div class="row"><div class="level">32px</div><div class="sample" style="font-size:32px">大樹教練字級對照表</div></div>
+    <div class="row"><div class="level">36px</div><div class="sample" style="font-size:36px">大樹教練字級</div></div>
+    <div class="row"><div class="level">40px</div><div class="sample" style="font-size:40px">大樹教練字級</div></div>
+    <div class="row"><div class="level">44px</div><div class="sample" style="font-size:44px">大樹教練字級</div></div>
+    <div class="row"><div class="level">48px</div><div class="sample" style="font-size:48px">大樹教練字級</div></div>
+    <div class="row"><div class="level">56px</div><div class="sample" style="font-size:56px">大樹教練</div></div>
+    <div class="row"><div class="level">64px</div><div class="sample" style="font-size:64px">大樹教練</div></div>
+    <div class="row"><div class="level">72px</div><div class="sample" style="font-size:72px">大樹教練</div></div>
+    <div class="row"><div class="level">88px</div><div class="sample" style="font-size:88px">大樹教練</div></div>
+    <div class="row"><div class="level">104px</div><div class="sample" style="font-size:104px">大樹</div></div>
+
+    <a class="back" href="index.html">← 回作品一覽表</a>
+  </div>
+</body>
+</html>
