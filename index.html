@@ -76,7 +76,7 @@
 <body>
   <div class="wrap">
     <h1>大樹AI作品總覽<span>｜個人專用</span></h1>
-    <p class="sub">拖動左側 ⠿ 手把可調整順序，編號會自動更新；點名稱直接開啟連結。</p>
+    <p class="sub">拖動左側 ⠿ 手把可調整順序，也可以拖到別的分類；編號跟項目數會自動更新；點名稱直接開啟連結。</p>
     <div class="toolbar">
       <button class="btn-copy" id="btnCopy">📋 複製目前排序（貼給AI固化進正式檔案）</button>
     </div>
@@ -157,24 +157,59 @@
 
 <script>
 (function(){
+  var LAYOUT_KEY = 'coach888_layout';
+
   function renumber(grid){
     grid.querySelectorAll('.item .num').forEach(function(el, i){ el.textContent = i + 1; });
+    var title = grid.previousElementSibling;
+    if (title && title.classList.contains('section-title')) {
+      var countEl = title.querySelector('.count');
+      if (countEl) countEl.textContent = grid.querySelectorAll('.item').length + '項';
+    }
   }
-  function saveOrder(grid){
-    var ids = Array.prototype.map.call(grid.querySelectorAll('.item'), function(it){ return it.dataset.url; });
-    localStorage.setItem('coach888_order_' + grid.dataset.section, JSON.stringify(ids));
+
+  function saveLayout(){
+    var layout = {};
+    document.querySelectorAll('.grid').forEach(function(grid){
+      layout[grid.dataset.section] = Array.prototype.map.call(grid.querySelectorAll('.item'), function(it){ return it.dataset.url; });
+    });
+    localStorage.setItem(LAYOUT_KEY, JSON.stringify(layout));
+    // 清掉2026-07-20版之前的舊格式（每組各自存一個key），避免新舊格式打架
+    document.querySelectorAll('.grid').forEach(function(grid){
+      localStorage.removeItem('coach888_order_' + grid.dataset.section);
+    });
   }
-  function loadOrder(grid){
-    var saved = localStorage.getItem('coach888_order_' + grid.dataset.section);
-    if (!saved) return;
-    var ids;
-    try { ids = JSON.parse(saved); } catch(e){ return; }
-    var items = Array.prototype.slice.call(grid.querySelectorAll('.item'));
-    var map = {};
-    items.forEach(function(it){ map[it.dataset.url] = it; });
-    ids.forEach(function(id){ if (map[id]) grid.appendChild(map[id]); });
-    renumber(grid);
+
+  function loadLayout(){
+    var raw = localStorage.getItem(LAYOUT_KEY);
+    if (raw) {
+      try { return JSON.parse(raw); } catch(e){}
+    }
+    // 相容舊版：只支援組內排序、每組各自一個key，讀出來當初始佈局
+    var legacy = {}, found = false;
+    document.querySelectorAll('.grid').forEach(function(grid){
+      var old = localStorage.getItem('coach888_order_' + grid.dataset.section);
+      if (old) {
+        try { legacy[grid.dataset.section] = JSON.parse(old); found = true; } catch(e){}
+      }
+    });
+    return found ? legacy : null;
   }
+
+  function applyLayout(){
+    var layout = loadLayout();
+    if (!layout) return;
+    var allItems = {};
+    document.querySelectorAll('.item').forEach(function(it){ allItems[it.dataset.url] = it; });
+    document.querySelectorAll('.grid').forEach(function(grid){
+      var ids = layout[grid.dataset.section];
+      if (!ids) return;
+      ids.forEach(function(id){
+        if (allItems[id]) grid.appendChild(allItems[id]);
+      });
+    });
+  }
+
   function getDragAfterElement(grid, y){
     var els = Array.prototype.slice.call(grid.querySelectorAll('.item:not(.dragging)'));
     return els.reduce(function(closest, child){
@@ -186,19 +221,29 @@
       return closest;
     }, { offset: -Infinity, element: null }).element;
   }
-  function initGrid(grid){
-    loadOrder(grid);
-    var dragEl = null;
+
+  // dragEl/sourceGrid 提到全域（不是每個grid各自封閉），這樣拖到別的分類的
+  // dragover事件才拿得到「正在被拖的是誰」，達成跨組移動
+  var dragEl = null;
+  var sourceGrid = null;
+
+  applyLayout();
+
+  document.querySelectorAll('.grid').forEach(function(grid){
     grid.querySelectorAll('.item').forEach(function(item){
       item.addEventListener('dragstart', function(){
         dragEl = item;
+        sourceGrid = item.closest('.grid');
         setTimeout(function(){ item.classList.add('dragging'); }, 0);
       });
       item.addEventListener('dragend', function(){
         item.classList.remove('dragging');
+        var targetGrid = item.closest('.grid');
+        renumber(sourceGrid);
+        if (targetGrid !== sourceGrid) renumber(targetGrid);
+        saveLayout();
         dragEl = null;
-        renumber(grid);
-        saveOrder(grid);
+        sourceGrid = null;
       });
     });
     grid.addEventListener('dragover', function(e){
@@ -211,8 +256,9 @@
         grid.insertBefore(dragEl, afterEl);
       }
     });
-  }
-  document.querySelectorAll('.grid').forEach(initGrid);
+  });
+
+  document.querySelectorAll('.grid').forEach(renumber);
 
   var toastEl = document.getElementById('toast');
   function toast(msg){
