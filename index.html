@@ -9,11 +9,10 @@
   :root { --gold:#c8a96e; --dark:#0a0a0a; --dark2:#141414; --line:rgba(200,169,110,.3); }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:'Noto Sans TC', sans-serif; background:var(--dark); color:#fff; padding:36px 20px 100px; }
-  .wrap { max-width:1500px; margin:0 auto; }
-  .row { display:grid; grid-template-columns:1fr 1fr; column-gap:48px; }
-  .col { min-width:0; }
+  .wrap { max-width:1500px; margin:0 auto; column-count:2; column-gap:48px; }
+  .section-block { break-inside:avoid; -webkit-column-break-inside:avoid; display:inline-block; width:100%; }
   @media (max-width:900px){
-    .row { grid-template-columns:1fr; }
+    .wrap { column-count:1; }
   }
   h1 { font-size:30px; font-weight:900; margin-bottom:6px; }
   h1 span { color:var(--gold); }
@@ -90,22 +89,24 @@
       <button class="btn-copy" id="btnCopy">📋 複製目前排序（貼給AI固化進正式檔案）</button>
     </div>
 
-    <div class="row">
-    <div class="col">
-    <div class="section-title" data-section="bnichangyong"><span class="idx">一、</span><span class="title-text" contenteditable="true" spellcheck="false">BNI 最近常用</span> <span class="count">9項</span></div>
+    <div class="section-block">
+    <div class="section-title" data-section="bnichangyong"><span class="idx">一、</span><span class="title-text" contenteditable="true" spellcheck="false">BNI 最近常用</span> <span class="count">11項</span></div>
     <div class="grid" data-section="bnichangyong">
       <div class="item" data-url="https://coach1973.github.io/bni-dna/"><span class="drag-handle">⠿</span><div class="num">1</div><a class="name" href="https://coach1973.github.io/bni-dna/" target="_blank">BNI｜出席戰情儀表板</a><div class="url">coach1973.github.io/bni-dna</div><div class="badge private" contenteditable="true" spellcheck="false">私藏·BNI</div></div>
       <div class="item" data-url="https://chapters.bymyway.com/"><span class="drag-handle">⠿</span><div class="num">2</div><a class="name" href="https://chapters.bymyway.com/" target="_blank">BNI｜大台南南區分會總表</a><div class="url">chapters.bymyway.com</div><div class="badge private" contenteditable="true" spellcheck="false">私藏·BNI</div></div>
       <div class="item" data-url="https://chapters.bymyway.com/admin"><span class="drag-handle">⠿</span><div class="num">3</div><a class="name" href="https://chapters.bymyway.com/admin" target="_blank">BNI｜大台南南區分會後台管理系統</a><div class="url">chapters.bymyway.com/admin</div><div class="badge private" contenteditable="true" spellcheck="false">私藏·BNI</div></div>
-      <div class="item" data-url="https://namecard.bymyway.com/bni-credit"><span class="drag-handle">⠿</span><div class="num">4</div><a class="name" href="https://namecard.bymyway.com/bni-credit" target="_blank">BNI｜信用証追蹤系統</a><div class="url">namecard.bymyway.com/bni-credit</div><div class="badge private" contenteditable="true" spellcheck="false">私藏·BNI</div></div>
-      <div class="item" data-url="https://sincere.bymyway.com/"><span class="drag-handle">⠿</span><div class="num">5</div><a class="name" href="https://sincere.bymyway.com/" target="_blank">BNI｜真誠分會邀約來賓戰情儀表板</a><div class="url">sincere.bymyway.com</div><div class="badge private" contenteditable="true" spellcheck="false">私藏·BNI</div></div>
-      <div class="item" data-url="https://zhenxin.bymyway.com/"><span class="drag-handle">⠿</span><div class="num">6</div><a class="name" href="https://zhenxin.bymyway.com/" target="_blank">BNI｜真鑫分會邀約來賓戰情儀表板</a><div class="url">zhenxin.bymyway.com</div><div class="badge private" contenteditable="true" spellcheck="false">私藏·BNI</div></div>
-      <div class="item" data-url="https://real-diamonds.bymyway.com/"><span class="drag-handle">⠿</span><div class="num">7</div><a class="name" href="https://real-diamonds.bymyway.com/" target="_blank">BNI｜真鑽分會邀約來賓戰情儀表板</a><div class="url">real-diamonds.bymyway.com</div><div class="badge private" contenteditable="true" spellcheck="false">私藏·BNI</div></div>
-      <div class="item" data-url="https://real-wealth.bymyway.com/"><span class="drag-handle">⠿</span><div class="num">8</div><a class="name" href="https://real-wealth.bymyway.com/" target="_blank">BNI｜真貴籌備會邀約來賓戰情儀表板</a><div class="url">real-wealth.bymyway.com</div><div class="badge private" contenteditable="true" spellcheck="false">私藏·BNI</div></div>
-      <div class="item" data-url="https://team01.bymyway.com/"><span class="drag-handle">⠿</span><div class="num">9</div><a class="name" href="https://team01.bymyway.com/" target="_blank">BNI｜Team 01邀約來賓戰情儀表板</a><div class="url">team01.bymyway.com</div><div class="badge private" contenteditable="true" spellcheck="false">私藏·BNI</div></div>
+      <div class="item" data-url="https://chapters.bymyway.com/training"><span class="drag-handle">⠿</span><div class="num">4</div><a class="name" href="https://chapters.bymyway.com/training" target="_blank">BNI｜培訓總覽</a><div class="url">chapters.bymyway.com/training</div><div class="badge private" contenteditable="true" spellcheck="false">私藏·BNI</div></div>
+      <div class="item" data-url="https://chapters.bymyway.com/guests"><span class="drag-handle">⠿</span><div class="num">5</div><a class="name" href="https://chapters.bymyway.com/guests" target="_blank">BNI｜來賓總覽</a><div class="url">chapters.bymyway.com/guests</div><div class="badge private" contenteditable="true" spellcheck="false">私藏·BNI</div></div>
+      <div class="item" data-url="https://namecard.bymyway.com/bni-credit"><span class="drag-handle">⠿</span><div class="num">6</div><a class="name" href="https://namecard.bymyway.com/bni-credit" target="_blank">BNI｜信用証追蹤系統</a><div class="url">namecard.bymyway.com/bni-credit</div><div class="badge private" contenteditable="true" spellcheck="false">私藏·BNI</div></div>
+      <div class="item" data-url="https://sincere.bymyway.com/"><span class="drag-handle">⠿</span><div class="num">7</div><a class="name" href="https://sincere.bymyway.com/" target="_blank">BNI｜真誠分會邀約來賓戰情儀表板</a><div class="url">sincere.bymyway.com</div><div class="badge private" contenteditable="true" spellcheck="false">私藏·BNI</div></div>
+      <div class="item" data-url="https://zhenxin.bymyway.com/"><span class="drag-handle">⠿</span><div class="num">8</div><a class="name" href="https://zhenxin.bymyway.com/" target="_blank">BNI｜真鑫分會邀約來賓戰情儀表板</a><div class="url">zhenxin.bymyway.com</div><div class="badge private" contenteditable="true" spellcheck="false">私藏·BNI</div></div>
+      <div class="item" data-url="https://real-diamonds.bymyway.com/"><span class="drag-handle">⠿</span><div class="num">9</div><a class="name" href="https://real-diamonds.bymyway.com/" target="_blank">BNI｜真鑽分會邀約來賓戰情儀表板</a><div class="url">real-diamonds.bymyway.com</div><div class="badge private" contenteditable="true" spellcheck="false">私藏·BNI</div></div>
+      <div class="item" data-url="https://real-wealth.bymyway.com/"><span class="drag-handle">⠿</span><div class="num">10</div><a class="name" href="https://real-wealth.bymyway.com/" target="_blank">BNI｜真貴籌備會邀約來賓戰情儀表板</a><div class="url">real-wealth.bymyway.com</div><div class="badge private" contenteditable="true" spellcheck="false">私藏·BNI</div></div>
+      <div class="item" data-url="https://team01.bymyway.com/"><span class="drag-handle">⠿</span><div class="num">11</div><a class="name" href="https://team01.bymyway.com/" target="_blank">BNI｜Team 01邀約來賓戰情儀表板</a><div class="url">team01.bymyway.com</div><div class="badge private" contenteditable="true" spellcheck="false">私藏·BNI</div></div>
     </div>
     </div>
-    <div class="col">
+
+    <div class="section-block">
     <div class="section-title" data-section="changyong"><span class="idx">二、</span><span class="title-text" contenteditable="true" spellcheck="false">大樹常用</span> <span class="count">17項</span></div>
     <div class="grid" data-section="changyong">
       <div class="item" data-url="https://tainan-calender.netlify.app/"><span class="drag-handle">⠿</span><div class="num">1</div><a class="name" href="https://tainan-calender.netlify.app/" target="_blank">大台南BNI培訓行事曆（Netlify舊版）</a><div class="url">tainan-calender.netlify.app</div><div class="badge legacy" contenteditable="true" spellcheck="false">待退場</div></div>
@@ -127,10 +128,8 @@
       <div class="item" data-url="https://coach1973.github.io/ai-fit/"><span class="drag-handle">⠿</span><div class="num">17</div><a class="name" href="https://coach1973.github.io/ai-fit/" target="_blank">從從容容用AI聊健康（9/22台南場）</a><div class="url">coach1973.github.io/ai-fit</div><div class="badge star" contenteditable="true" spellcheck="false">常用</div></div>
     </div>
     </div>
-    </div>
 
-    <div class="row">
-    <div class="col">
+    <div class="section-block">
     <div class="section-title" data-section="houtai"><span class="idx">三、</span><span class="title-text" contenteditable="true" spellcheck="false">後臺系統</span> <span class="count">10項</span></div>
     <div class="grid" data-section="houtai">
       <div class="item" data-url="https://mentor100.bymyway.com/admin/login?next=/admin"><span class="drag-handle">⠿</span><div class="num">1</div><a class="name" href="https://mentor100.bymyway.com/admin/login?next=/admin" target="_blank">AI百人導師後台系統</a><div class="url">mentor100.bymyway.com/admin</div><div class="badge backend" contenteditable="true" spellcheck="false">後臺</div></div>
@@ -144,7 +143,9 @@
       <div class="item" data-url="https://event.bymyway.com/qr/wheel-print.html"><span class="drag-handle">⠿</span><div class="num">9</div><a class="name" href="https://event.bymyway.com/qr/wheel-print.html" target="_blank">掃 QR Code 玩抽獎</a><div class="url">event.bymyway.com/qr/wheel-print.html</div><div class="badge backend" contenteditable="true" spellcheck="false">後臺</div></div>
       <div class="item" data-url="https://event.bymyway.com/qr/ganjing-print.html"><span class="drag-handle">⠿</span><div class="num">10</div><a class="name" href="https://event.bymyway.com/qr/ganjing-print.html" target="_blank">乾淨世界頻道關注QR</a><div class="url">event.bymyway.com/qr/ganjing-print.html</div><div class="badge backend" contenteditable="true" spellcheck="false">後臺</div></div>
     </div>
-    <div class="col">
+    </div>
+
+    <div class="section-block">
     <div class="section-title" data-section="bymyway"><span class="idx">四、</span><span class="title-text" contenteditable="true" spellcheck="false">bymyway自架版（逐步取代Netlify）</span> <span class="count">5項</span></div>
     <div class="grid" data-section="bymyway">
       <div class="item" data-url="https://event.bymyway.com/bigtree/"><span class="drag-handle">⠿</span><div class="num">1</div><a class="name" href="https://event.bymyway.com/bigtree/" target="_blank">大樹小講</a><div class="url">event.bymyway.com/bigtree</div><div class="badge bymyway" contenteditable="true" spellcheck="false">bymyway新版</div></div>
@@ -155,10 +156,8 @@
     </div>
     <p class="note">讀活repo即時渲染，不用Netlify部署額度；標「待退場」的Netlify舊版對照見下方各分區，穩定一陣子後才會撤掉舊版</p>
     </div>
-    </div>
 
-    <div class="row">
-    <div class="col">
+    <div class="section-block">
     <div class="section-title" data-section="bni"><span class="idx">五、</span><span class="title-text" contenteditable="true" spellcheck="false">BNI專用</span> <span class="count">11項</span></div>
     <div class="grid" data-section="bni">
       <div class="item" data-url="https://bni-traffic.netlify.app/"><span class="drag-handle">⠿</span><div class="num">1</div><a class="name" href="https://bni-traffic.netlify.app/" target="_blank">BNI｜燈號表（Netlify舊版）</a><div class="url">bni-traffic.netlify.app</div><div class="badge legacy" contenteditable="true" spellcheck="false">待退場</div></div>
@@ -174,7 +173,8 @@
       <div class="item" data-url="https://tourmaline-panda-82be5e.netlify.app/"><span class="drag-handle">⠿</span><div class="num">11</div><a class="name" href="https://tourmaline-panda-82be5e.netlify.app/" target="_blank">BNI｜轉盤</a><div class="url">tourmaline-panda-82be5e.netlify.app</div><div class="badge private" contenteditable="true" spellcheck="false">私藏·BNI</div></div>
     </div>
     </div>
-    <div class="col">
+
+    <div class="section-block">
     <div class="section-title" data-section="gongkai"><span class="idx">六、</span><span class="title-text" contenteditable="true" spellcheck="false">對外公開</span> <span class="count">7項</span></div>
     <div class="grid" data-section="gongkai">
       <div class="item" data-url="https://theunrestrictedwar.netlify.app"><span class="drag-handle">⠿</span><div class="num">1</div><a class="name" href="https://theunrestrictedwar.netlify.app" target="_blank">超限戰</a><div class="url">theunrestrictedwar.netlify.app</div><div class="badge public" contenteditable="true" spellcheck="false">公開</div></div>
@@ -186,10 +186,8 @@
       <div class="item" data-url="https://team.bymyway.com/"><span class="drag-handle">⠿</span><div class="num">7</div><a class="name" href="https://team.bymyway.com/" target="_blank">團隊分會總表（非BNI・招募創始會員）</a><div class="url">team.bymyway.com</div><div class="badge public" contenteditable="true" spellcheck="false">公開</div></div>
     </div>
     </div>
-    </div>
 
-    <div class="row">
-    <div class="col">
+    <div class="section-block">
     <div class="section-title" data-section="bugongkai"><span class="idx">七、</span><span class="title-text" contenteditable="true" spellcheck="false">不公開（個人檢索用）</span> <span class="count">3項</span></div>
     <div class="grid" data-section="bugongkai">
       <div class="item" data-url="https://coach1973.github.io/consultant/"><span class="drag-handle">⠿</span><div class="num">1</div><a class="name" href="https://coach1973.github.io/consultant/" target="_blank">謝扉榆創業講座</a><div class="url">coach1973.github.io/consultant</div><div class="badge private" contenteditable="true" spellcheck="false">私藏</div></div>
@@ -197,7 +195,8 @@
       <div class="item" data-url="https://coach1973.github.io/government-subsidies/"><span class="drag-handle">⠿</span><div class="num">3</div><a class="name" href="https://coach1973.github.io/government-subsidies/" target="_blank">中小微企業多元發展實戰說明會</a><div class="url">coach1973.github.io/government-subsidies</div><div class="badge private" contenteditable="true" spellcheck="false">私藏</div></div>
     </div>
     </div>
-    <div class="col">
+
+    <div class="section-block">
     <div class="section-title" data-section="baoliu"><span class="idx">八、</span><span class="title-text" contenteditable="true" spellcheck="false">保留（尚未推Netlify）</span> <span class="count">6項</span></div>
     <div class="grid" data-section="baoliu">
       <div class="item" data-url="https://coach1973.github.io/vip-club/"><span class="drag-handle">⠿</span><div class="num">1</div><a class="name" href="https://coach1973.github.io/vip-club/" target="_blank">特助21心法完整版</a><div class="url">coach1973.github.io/vip-club</div><div class="badge reserved" contenteditable="true" spellcheck="false">保留</div></div>
@@ -208,7 +207,6 @@
       <div class="item" data-url="https://coach1973.github.io/coach-vip-club/"><span class="drag-handle">⠿</span><div class="num">6</div><a class="name" href="https://coach1973.github.io/coach-vip-club/" target="_blank">頂級特助俱樂部（純淨版）</a><div class="url">coach1973.github.io/coach-vip-club</div><div class="badge reserved" contenteditable="true" spellcheck="false">保留</div></div>
     </div>
     <p class="note">還沒推Netlify，先掛在GitHub Pages；日後要對外公開時記得先推上去</p>
-    </div>
     </div>
   </div>
 
