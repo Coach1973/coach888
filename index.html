@@ -263,6 +263,13 @@
     <button class="btn-add-item" data-section="baoliu">+ 新增項目</button>
     <p class="note">還沒推Netlify，先掛在GitHub Pages；日後要對外公開時記得先推上去</p>
     </div>
+
+    <div class="section-block" id="recycleBinBlock">
+    <div class="section-title" data-section="recentlydeleted"><span class="toggle-arrow" title="收合/展開">▼</span><span class="idx">🗑</span><span class="title-text" contenteditable="false" spellcheck="false">最近刪除</span> <span class="count">0項</span></div>
+    <div class="grid" data-section="recentlydeleted"></div>
+    <p class="note">刪除的項目會先放在這裡，不會直接消失；用上方「☑️批量搬移模式」勾選後可以移回想要的分類。確定不要了再按下面永久清空。</p>
+    <button class="btn-add-item" id="btnEmptyRecycleBin">🗑 永久清空最近刪除</button>
+    </div>
   </div>
 
   <div class="toast" id="toast"></div>
@@ -411,9 +418,12 @@
   }
 
   function renumberSections(){
-    document.querySelectorAll('.section-title').forEach(function(title, i){
+    var i = 0;
+    document.querySelectorAll('.section-title').forEach(function(title){
+      if (title.dataset.section === 'recentlydeleted') return; // 最近刪除不參與一二三編號
       var idxEl = title.querySelector('.idx');
       if (idxEl) idxEl.textContent = (CHINESE_NUM[i] || (i + 1)) + '、';
+      i++;
     });
   }
 
@@ -430,12 +440,23 @@
     var del = item.querySelector('.item-del');
     del.addEventListener('click', function(){
       var name = item.querySelector('.name').textContent.trim();
-      if (!confirm('確定要刪除「' + name + '」這個項目嗎？')) return;
       var grid = item.closest('.grid');
-      item.remove();
+      if (grid.dataset.section === 'recentlydeleted') {
+        // 在「最近刪除」裡按刪除＝真的永久刪除，才需要確認
+        if (!confirm('確定要永久刪除「' + name + '」嗎？這個動作無法復原。')) return;
+        item.remove();
+        renumber(grid);
+        saveLayout();
+        toast('已永久刪除「' + name + '」');
+        return;
+      }
+      // 一般分類刪除＝移進「最近刪除」，可復原，不用再跳確認視窗
+      var recycleGrid = document.querySelector('.grid[data-section="recentlydeleted"]');
+      recycleGrid.appendChild(item);
       renumber(grid);
+      renumber(recycleGrid);
       saveLayout();
-      toast('已刪除「' + name + '」');
+      toast('已移到「最近刪除」，用☑️批量搬移模式可以勾選移回原分類');
     });
     var badgeEl = item.querySelector('.badge');
     bindEditable(badgeEl, saveBadges);
@@ -511,12 +532,16 @@
     var delBtn = title.querySelector('.section-del');
     delBtn.addEventListener('click', function(){
       var name = title.querySelector('.title-text').textContent.trim();
-      if (!confirm('確定要刪除整個「' + name + '」分類嗎？裡面所有項目都會一起消失。')) return;
+      if (!confirm('確定要刪除整個「' + name + '」分類嗎？裡面的項目會先移到「最近刪除」，分類本身會消失。')) return;
+      var recycleGrid = document.querySelector('.grid[data-section="recentlydeleted"]');
+      var items = Array.prototype.slice.call(grid.querySelectorAll('.item'));
+      items.forEach(function(it){ recycleGrid.appendChild(it); });
+      renumber(recycleGrid);
       block.remove();
       renumberSections();
       saveLayout();
       saveTitles();
-      toast('已刪除「' + name + '」分類');
+      toast('已刪除「' + name + '」分類，' + items.length + ' 個項目已移到「最近刪除」');
     });
     var titleText = title.querySelector('.title-text');
     bindEditable(titleText, saveTitles);
@@ -624,9 +649,33 @@
   }
 
   document.querySelectorAll('.item').forEach(wireItem);
-  document.querySelectorAll('.section-block').forEach(wireSectionBlock);
+  document.querySelectorAll('.section-block').forEach(function(block){
+    if (block.id === 'recycleBinBlock') return; // 最近刪除用專屬邏輯初始化，不套一般分類的刪除/改名
+    wireSectionBlock(block);
+  });
 
   document.querySelectorAll('.grid').forEach(renumber);
+
+  (function initRecycleBin(){
+    var block = document.getElementById('recycleBinBlock');
+    if (!block) return;
+    var arrow = block.querySelector('.toggle-arrow');
+    arrow.addEventListener('click', function(){
+      block.classList.toggle('collapsed');
+      saveCollapse();
+    });
+    var emptyBtn = document.getElementById('btnEmptyRecycleBin');
+    emptyBtn.addEventListener('click', function(){
+      var grid = block.querySelector('.grid');
+      var n = grid.querySelectorAll('.item').length;
+      if (n === 0) { toast('最近刪除目前是空的'); return; }
+      if (!confirm('確定要永久清空「最近刪除」的 ' + n + ' 個項目嗎？這個動作無法復原。')) return;
+      grid.innerHTML = '';
+      renumber(grid);
+      saveLayout();
+      toast('已永久清空最近刪除');
+    });
+  })();
 
   document.getElementById('btnAddSection').addEventListener('click', addSection);
 
