@@ -103,6 +103,22 @@
     cursor:pointer; transition:.2s;
   }
   .btn-add-section:hover { background:rgba(200,169,110,.15); }
+  .bulk-checkbox { display:none; flex-shrink:0; width:17px; height:17px; cursor:pointer; accent-color:var(--gold); }
+  .wrap.bulk-mode .bulk-checkbox { display:inline-block; }
+  .item.selected { border-color:var(--gold); background:rgba(200,169,110,.1); }
+  .edit-name { cursor:pointer; flex-shrink:0; opacity:.3; font-size:13px; transition:opacity .2s; }
+  .edit-name:hover { opacity:1; }
+  .bulk-bar {
+    position:fixed; bottom:0; left:0; right:0; background:#151107; border-top:2px solid var(--gold);
+    padding:14px 20px; display:none; align-items:center; gap:12px; flex-wrap:wrap; z-index:1000;
+    box-shadow:0 -4px 16px rgba(0,0,0,.4); font-size:14px;
+  }
+  .bulk-bar.show { display:flex; }
+  .bulk-bar .count { color:var(--gold); font-weight:900; }
+  .bulk-bar select {
+    background:#1c1c1c; color:#fff; border:1px solid var(--line); border-radius:8px;
+    padding:8px 12px; font-family:inherit; font-size:14px;
+  }
   @media (max-width:520px){
     .url { display:none; }
     .name { font-size:15px; }
@@ -112,16 +128,17 @@
 <body>
   <div class="wrap">
     <h1>大樹AI作品總覽<span>｜個人專用</span></h1>
-    <p class="sub">拖動左側 ⠿ 手把可調整順序，也可以拖到別的分類；點大項標題文字或右側標籤文字可直接修改，離開文字框自動記住；編號跟項目數會自動更新；點名稱直接開啟連結。</p>
+    <p class="sub">拖動左側 ⠿ 手把可調整順序，也可以拖到別的分類；點大項標題文字或右側標籤文字可直接修改，離開文字框自動記住；點名稱旁的✏️可改顯示名稱；編號跟項目數會自動更新；點名稱直接開啟連結。</p>
     <div class="toolbar">
       <button class="btn-copy" id="btnCopy">📋 複製目前排序（貼給AI固化進正式檔案）</button>
       <button class="btn-add-section" id="btnAddSection">➕ 新增分類</button>
+      <button class="btn-add-section" id="btnBulkMode">☑️ 批量搬移模式</button>
     </div>
 
     <div class="section-block">
     <div class="section-title" data-section="bnichangyong"><span class="toggle-arrow" title="收合/展開">▼</span><span class="idx">一、</span><span class="title-text" contenteditable="true" spellcheck="false">BNI 最近常用</span> <span class="count">11項</span><span class="section-del" title="刪除整個分類">🗑</span></div>
     <div class="grid" data-section="bnichangyong">
-      <div class="item" data-url="https://coach1973.github.io/bni-dna/"><span class="drag-handle">⠿</span><div class="num">1</div><a class="name" href="https://coach1973.github.io/bni-dna/" target="_blank">BNI｜出席戰情儀表板</a><div class="url">coach1973.github.io/bni-dna</div><div class="badge private" contenteditable="true" spellcheck="false">私藏·BNI</div><span class="item-del" title="刪除這個項目">✕</span></div>
+      <div class="item" data-url="https://coach1973.github.io/bni-dna/"><span class="drag-handle">⠿</span><div class="num">1</div><a class="name" href="https://coach1973.github.io/bni-dna/" target="_blank">DNA出席</a><div class="url">coach1973.github.io/bni-dna</div><div class="badge private" contenteditable="true" spellcheck="false">私藏·BNI</div><span class="item-del" title="刪除這個項目">✕</span></div>
       <div class="item" data-url="https://chapters.bymyway.com/"><span class="drag-handle">⠿</span><div class="num">2</div><a class="name" href="https://chapters.bymyway.com/" target="_blank">BNI｜大台南南區分會總表</a><div class="url">chapters.bymyway.com</div><div class="badge private" contenteditable="true" spellcheck="false">私藏·BNI</div><span class="item-del" title="刪除這個項目">✕</span></div>
       <div class="item" data-url="https://chapters.bymyway.com/admin"><span class="drag-handle">⠿</span><div class="num">3</div><a class="name" href="https://chapters.bymyway.com/admin" target="_blank">BNI｜大台南南區分會後台管理系統</a><div class="url">chapters.bymyway.com/admin</div><div class="badge private" contenteditable="true" spellcheck="false">私藏·BNI</div><span class="item-del" title="刪除這個項目">✕</span></div>
       <div class="item" data-url="https://chapters.bymyway.com/training"><span class="drag-handle">⠿</span><div class="num">4</div><a class="name" href="https://chapters.bymyway.com/training" target="_blank">BNI｜培訓總覽</a><div class="url">chapters.bymyway.com/training</div><div class="badge private" contenteditable="true" spellcheck="false">私藏·BNI</div><span class="item-del" title="刪除這個項目">✕</span></div>
@@ -168,7 +185,7 @@
       <div class="item" data-url="https://peipei-event.bymyway.com/admin/login?next=/admin"><span class="drag-handle">⠿</span><div class="num">3</div><a class="name" href="https://peipei-event.bymyway.com/admin/login?next=/admin" target="_blank">佩佩老師活動後台系統</a><div class="url">peipei-event.bymyway.com/admin</div><div class="badge backend" contenteditable="true" spellcheck="false">後臺</div><span class="item-del" title="刪除這個項目">✕</span></div>
       <div class="item" data-url="https://peipei-event.bymyway.com/qr/peipei-print.html"><span class="drag-handle">⠿</span><div class="num">4</div><a class="name" href="https://peipei-event.bymyway.com/qr/peipei-print.html" target="_blank">佩佩老師報到系統</a><div class="url">peipei-event.bymyway.com/qr/peipei-print.html</div><div class="badge backend" contenteditable="true" spellcheck="false">後臺</div><span class="item-del" title="刪除這個項目">✕</span></div>
       <div class="item" data-url="https://event.bymyway.com/qr/checkin-print.html"><span class="drag-handle">⠿</span><div class="num">5</div><a class="name" href="https://event.bymyway.com/qr/checkin-print.html" target="_blank">數位簽到系統</a><div class="url">event.bymyway.com/qr/checkin-print.html</div><div class="badge backend" contenteditable="true" spellcheck="false">後臺</div><span class="item-del" title="刪除這個項目">✕</span></div>
-      <div class="item" data-url="https://namecard.bymyway.com"><span class="drag-handle">⠿</span><div class="num">6</div><a class="name" href="https://namecard.bymyway.com" target="_blank">AI名片系統</a><div class="url">namecard.bymyway.com</div><div class="badge backend" contenteditable="true" spellcheck="false">後臺</div><span class="item-del" title="刪除這個項目">✕</span></div>
+      <div class="item" data-url="https://namecard.bymyway.com/team/login?next=/admin/team"><span class="drag-handle">⠿</span><div class="num">6</div><a class="name" href="https://namecard.bymyway.com/team/login?next=/admin/team" target="_blank">AI資源媒合系統・帳號審核</a><div class="url">namecard.bymyway.com/admin/team</div><div class="badge backend" contenteditable="true" spellcheck="false">後臺</div><span class="item-del" title="刪除這個項目">✕</span></div>
       <div class="item" data-url="https://rpl-workshop.bymyway.com/admin/login?next=/admin"><span class="drag-handle">⠿</span><div class="num">7</div><a class="name" href="https://rpl-workshop.bymyway.com/admin/login?next=/admin" target="_blank">結繩領導學戰報系統</a><div class="url">rpl-workshop.bymyway.com/admin</div><div class="badge backend" contenteditable="true" spellcheck="false">後臺</div><span class="item-del" title="刪除這個項目">✕</span></div>
       <div class="item" data-url="https://event.bymyway.com/wheel"><span class="drag-handle">⠿</span><div class="num">8</div><a class="name" href="https://event.bymyway.com/wheel" target="_blank">抽獎轉盤系統</a><div class="url">event.bymyway.com/wheel</div><div class="badge backend" contenteditable="true" spellcheck="false">後臺</div><span class="item-del" title="刪除這個項目">✕</span></div>
       <div class="item" data-url="https://event.bymyway.com/qr/wheel-print.html"><span class="drag-handle">⠿</span><div class="num">9</div><a class="name" href="https://event.bymyway.com/qr/wheel-print.html" target="_blank">掃 QR Code 玩抽獎</a><div class="url">event.bymyway.com/qr/wheel-print.html</div><div class="badge backend" contenteditable="true" spellcheck="false">後臺</div><span class="item-del" title="刪除這個項目">✕</span></div>
@@ -250,12 +267,19 @@
 
   <div class="toast" id="toast"></div>
 
+  <div class="bulk-bar" id="bulkBar">
+    <span>已勾選 <span class="count" id="bulkCount">0</span> 個項目</span>
+    <select id="bulkTargetSelect"></select>
+    <button class="btn-add-section" id="btnBulkMove">搬移到這個分類</button>
+  </div>
+
 <script>
 (function(){
   var LAYOUT_KEY = 'coach888_layout';
   var TITLES_KEY = 'coach888_titles';
   var BADGES_KEY = 'coach888_badges';
   var COLLAPSE_KEY = 'coach888_collapse';
+  var NAMES_KEY = 'coach888_names';
   var CHINESE_NUM = ['一','二','三','四','五','六','七','八','九','十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十'];
 
   function renumber(grid){
@@ -337,6 +361,27 @@
     } catch(e){}
   }
 
+  function saveNames(){
+    var names = {};
+    document.querySelectorAll('.item').forEach(function(it){
+      var n = it.querySelector('.name');
+      if (n) names[it.dataset.url] = n.textContent.trim();
+    });
+    localStorage.setItem(NAMES_KEY, JSON.stringify(names));
+  }
+
+  function applyNames(){
+    var raw = localStorage.getItem(NAMES_KEY);
+    if (!raw) return;
+    try {
+      var names = JSON.parse(raw);
+      document.querySelectorAll('.item').forEach(function(it){
+        var n = it.querySelector('.name');
+        if (n && names[it.dataset.url] != null) n.textContent = names[it.dataset.url];
+      });
+    } catch(e){}
+  }
+
   function bindEditable(el, onSave){
     el.addEventListener('keydown', function(e){
       if (e.key === 'Enter') { e.preventDefault(); el.blur(); }
@@ -394,6 +439,39 @@
     });
     var badgeEl = item.querySelector('.badge');
     bindEditable(badgeEl, saveBadges);
+    ensureBulkCheckbox(item);
+    ensureEditIcon(item);
+  }
+
+  function ensureBulkCheckbox(item){
+    if (item.querySelector('.bulk-checkbox')) return;
+    var cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.className = 'bulk-checkbox';
+    item.querySelector('.drag-handle').insertAdjacentElement('afterend', cb);
+    cb.addEventListener('change', function(){
+      item.classList.toggle('selected', cb.checked);
+      updateBulkBar();
+    });
+  }
+
+  function ensureEditIcon(item){
+    if (item.querySelector('.edit-name')) return;
+    var nameEl = item.querySelector('.name');
+    var icon = document.createElement('span');
+    icon.className = 'edit-name';
+    icon.title = '修改顯示名稱';
+    icon.textContent = '✏️';
+    icon.addEventListener('click', function(e){
+      e.preventDefault();
+      var current = nameEl.textContent.trim();
+      var next = prompt('新的顯示名稱？', current);
+      if (next === null || next.trim() === '') return;
+      nameEl.textContent = next.trim();
+      saveNames();
+      toast('已改名為「' + next.trim() + '」，記得按上方複製排序貼給AI固化');
+    });
+    nameEl.insertAdjacentElement('afterend', icon);
   }
 
   function addItem(grid){
@@ -536,6 +614,7 @@
   applyTitles();
   applyBadges();
   applyCollapse();
+  applyNames();
 
   var toastEl = document.getElementById('toast');
   function toast(msg){
@@ -550,6 +629,65 @@
   document.querySelectorAll('.grid').forEach(renumber);
 
   document.getElementById('btnAddSection').addEventListener('click', addSection);
+
+  var bulkModeOn = false;
+
+  function updateBulkBar(){
+    var checked = document.querySelectorAll('.bulk-checkbox:checked').length;
+    document.getElementById('bulkCount').textContent = checked;
+    document.getElementById('bulkBar').classList.toggle('show', bulkModeOn);
+  }
+
+  function populateBulkSelect(){
+    var sel = document.getElementById('bulkTargetSelect');
+    sel.innerHTML = '';
+    document.querySelectorAll('.section-title').forEach(function(title){
+      var opt = document.createElement('option');
+      opt.value = title.dataset.section;
+      opt.textContent = title.querySelector('.title-text').textContent.trim();
+      sel.appendChild(opt);
+    });
+  }
+
+  document.getElementById('btnBulkMode').addEventListener('click', function(){
+    bulkModeOn = !bulkModeOn;
+    document.querySelector('.wrap').classList.toggle('bulk-mode', bulkModeOn);
+    this.textContent = bulkModeOn ? '✅ 結束批量搬移' : '☑️ 批量搬移模式';
+    if (bulkModeOn) {
+      populateBulkSelect();
+    } else {
+      document.querySelectorAll('.bulk-checkbox:checked').forEach(function(cb){ cb.checked = false; });
+      document.querySelectorAll('.item.selected').forEach(function(it){ it.classList.remove('selected'); });
+    }
+    updateBulkBar();
+  });
+
+  document.getElementById('btnBulkMove').addEventListener('click', function(){
+    var targetSection = document.getElementById('bulkTargetSelect').value;
+    var targetGrid = document.querySelector('.grid[data-section="' + targetSection + '"]');
+    if (!targetGrid) return;
+    var checkedBoxes = Array.prototype.slice.call(document.querySelectorAll('.bulk-checkbox:checked'));
+    if (checkedBoxes.length === 0) { toast('請先勾選要搬移的項目'); return; }
+    var seenSections = {};
+    var sourceGrids = [];
+    checkedBoxes.forEach(function(cb){
+      var item = cb.closest('.item');
+      var srcGrid = item.closest('.grid');
+      if (!seenSections[srcGrid.dataset.section]) {
+        seenSections[srcGrid.dataset.section] = true;
+        sourceGrids.push(srcGrid);
+      }
+      targetGrid.appendChild(item);
+      cb.checked = false;
+      item.classList.remove('selected');
+    });
+    sourceGrids.forEach(renumber);
+    renumber(targetGrid);
+    saveLayout();
+    updateBulkBar();
+    var targetName = targetGrid.previousElementSibling.querySelector('.title-text').textContent.trim();
+    toast('已搬移 ' + checkedBoxes.length + ' 個項目到「' + targetName + '」，記得按上方複製排序貼給AI固化');
+  });
 
   document.getElementById('btnCopy').addEventListener('click', function(){
     var lines = [];
