@@ -193,6 +193,32 @@
   var NAMES_KEY = 'coach888_names';
   var CHINESE_NUM = ['一','二','三','四','五','六','七','八','九','十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十'];
 
+  // ── 跨裝置同步(2026-09-03交辦)：原本排版只存在單一瀏覽器的localStorage，
+  // 教練在Mac改完、ACER開起來還是舊版。改成save時順便推到伺服器、load時先拉伺服器最新值，
+  // 伺服器連不上時退回原本的localStorage行為，不影響離線可用性。
+  var SYNC_ENDPOINT = 'https://event.bymyway.com/api/coach888/state';
+  var _syncTimer = null;
+  function syncStateToServer(){
+    clearTimeout(_syncTimer);
+    _syncTimer = setTimeout(function(){
+      var payload = {};
+      [LAYOUT_KEY, TITLES_KEY, BADGES_KEY, NAMES_KEY, COLLAPSE_KEY].forEach(function(k){
+        var v = localStorage.getItem(k);
+        if (v != null) payload[k] = v;
+      });
+      fetch(SYNC_ENDPOINT, {
+        method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
+      }).catch(function(){});
+    }, 400);
+  }
+  function pullStateFromServer(){
+    return fetch(SYNC_ENDPOINT).then(function(r){ return r.json(); }).then(function(state){
+      [LAYOUT_KEY, TITLES_KEY, BADGES_KEY, NAMES_KEY, COLLAPSE_KEY].forEach(function(k){
+        if (state[k] != null) localStorage.setItem(k, state[k]);
+      });
+    }).catch(function(){});
+  }
+
   function renumber(grid){
     grid.querySelectorAll('.item .num').forEach(function(el, i){ el.textContent = i + 1; });
     var title = grid.previousElementSibling;
@@ -212,6 +238,7 @@
     document.querySelectorAll('.grid').forEach(function(grid){
       localStorage.removeItem('coach888_order_' + grid.dataset.section);
     });
+    syncStateToServer();
   }
 
   function loadLayout(){
@@ -237,6 +264,7 @@
       if (span) titles[t.dataset.section] = span.textContent.trim();
     });
     localStorage.setItem(TITLES_KEY, JSON.stringify(titles));
+    syncStateToServer();
   }
 
   function applyTitles(){
@@ -258,6 +286,7 @@
       if (b) badges[it.dataset.url] = b.textContent.trim();
     });
     localStorage.setItem(BADGES_KEY, JSON.stringify(badges));
+    syncStateToServer();
   }
 
   function applyBadges(){
@@ -279,6 +308,7 @@
       if (n) names[it.dataset.url] = n.textContent.trim();
     });
     localStorage.setItem(NAMES_KEY, JSON.stringify(names));
+    syncStateToServer();
   }
 
   function applyNames(){
@@ -307,6 +337,7 @@
       if (grid) state[grid.dataset.section] = block.classList.contains('collapsed');
     });
     localStorage.setItem(COLLAPSE_KEY, JSON.stringify(state));
+    syncStateToServer();
   }
 
   function applyCollapse(){
@@ -544,6 +575,17 @@
   applyBadges();
   applyCollapse();
   applyNames();
+
+  // 先用本機localStorage/預設HTML快速畫出畫面，伺服器最新狀態拉到後再套用一次校正
+  // （教練在別台裝置改過排版時，這裡會把畫面更新成最新版，不用手動重新整理）
+  pullStateFromServer().then(function(){
+    applyLayout();
+    applyTitles();
+    applyBadges();
+    applyCollapse();
+    applyNames();
+    document.querySelectorAll('.grid').forEach(renumber);
+  });
 
   var toastEl = document.getElementById('toast');
   function toast(msg){
