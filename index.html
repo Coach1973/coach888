@@ -191,6 +191,7 @@
   var BADGES_KEY = 'coach888_badges';
   var COLLAPSE_KEY = 'coach888_collapse';
   var NAMES_KEY = 'coach888_names';
+  var SECTIONS_KEY = 'coach888_sections';
   var CHINESE_NUM = ['一','二','三','四','五','六','七','八','九','十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十'];
 
   // ── 跨裝置同步(2026-09-03交辦)：原本排版只存在單一瀏覽器的localStorage，
@@ -202,7 +203,7 @@
     clearTimeout(_syncTimer);
     _syncTimer = setTimeout(function(){
       var payload = {};
-      [LAYOUT_KEY, TITLES_KEY, BADGES_KEY, NAMES_KEY, COLLAPSE_KEY].forEach(function(k){
+      [LAYOUT_KEY, TITLES_KEY, BADGES_KEY, NAMES_KEY, COLLAPSE_KEY, SECTIONS_KEY].forEach(function(k){
         var v = localStorage.getItem(k);
         if (v != null) payload[k] = v;
       });
@@ -213,7 +214,7 @@
   }
   function pullStateFromServer(){
     return fetch(SYNC_ENDPOINT).then(function(r){ return r.json(); }).then(function(state){
-      [LAYOUT_KEY, TITLES_KEY, BADGES_KEY, NAMES_KEY, COLLAPSE_KEY].forEach(function(k){
+      [LAYOUT_KEY, TITLES_KEY, BADGES_KEY, NAMES_KEY, COLLAPSE_KEY, SECTIONS_KEY].forEach(function(k){
         if (state[k] != null) localStorage.setItem(k, state[k]);
       });
     }).catch(function(){});
@@ -277,6 +278,61 @@
         if (span && titles[t.dataset.section] != null) span.textContent = titles[t.dataset.section];
       });
     } catch(e){}
+  }
+
+  // 2026-09-04修復：「➕新增分類」建出來的分類原本只活在當下這個瀏覽器分頁的記憶體裡，
+  // 沒有存進任何地方（不是localStorage結構、不是伺服器、更不是原始HTML檔案）——
+  // 教練回報「新增分類後，批量搬移的下拉選單找不到新分類」，根因就是這個：分類本身
+  // 隨時可能消失，下拉選單只是最先被發現的症狀。現在把「有哪些自訂分類＋標題」也存進
+  // SECTIONS_KEY並跟著跨裝置同步，重新整理或換裝置都能重建出同一批空分類殼。
+  function saveSections(){
+    var sections = [];
+    document.querySelectorAll('.section-title').forEach(function(t){
+      if (t.dataset.section.indexOf('custom') === 0) {
+        var span = t.querySelector('.title-text');
+        sections.push({ key: t.dataset.section, name: span ? span.textContent.trim() : '' });
+      }
+    });
+    localStorage.setItem(SECTIONS_KEY, JSON.stringify(sections));
+    syncStateToServer();
+  }
+
+  function createSectionBlock(key, name){
+    var block = document.createElement('div');
+    block.className = 'section-block';
+    block.innerHTML =
+      '<div class="section-title" data-section="' + key + '">' +
+        '<span class="toggle-arrow" title="收合/展開">▼</span>' +
+        '<span class="idx">、</span>' +
+        '<span class="title-text" contenteditable="true" spellcheck="false">' + name.replace(/</g, '&lt;') + '</span> ' +
+        '<span class="count">0項</span>' +
+        '<span class="section-del" title="刪除整個分類">🗑</span>' +
+      '</div>' +
+      '<div class="grid" data-section="' + key + '"></div>' +
+      '<button class="btn-add-item" data-section="' + key + '">+ 新增項目</button>';
+    return block;
+  }
+
+  function restoreCustomSections(){
+    var raw = localStorage.getItem(SECTIONS_KEY);
+    if (!raw) return;
+    try {
+      var sections = JSON.parse(raw);
+      sections.forEach(function(s){
+        if (document.querySelector('.section-title[data-section="' + s.key + '"]')) return; // 已存在(靜態或先前已重建)，不重複建立
+        var block = createSectionBlock(s.key, s.name || '未命名分類');
+        document.querySelector('.wrap').appendChild(block);
+      });
+      renumberSections();
+    } catch(e){}
+  }
+
+  function wireAllSectionBlocks(){
+    document.querySelectorAll('.section-block').forEach(function(block){
+      if (block.id === 'recycleBinBlock' || block.dataset.wired) return;
+      wireSectionBlock(block);
+      block.dataset.wired = '1';
+    });
   }
 
   function saveBadges(){
@@ -476,6 +532,7 @@
       renumberSections();
       saveLayout();
       saveTitles();
+      saveSections();
       toast('已刪除「' + name + '」分類，' + items.length + ' 個項目已移到「最近刪除」');
     });
     var titleText = title.querySelector('.title-text');
@@ -490,22 +547,14 @@
     name = name.trim();
     var key = 'custom' + Date.now();
 
-    var block = document.createElement('div');
-    block.className = 'section-block';
-    block.innerHTML =
-      '<div class="section-title" data-section="' + key + '">' +
-        '<span class="toggle-arrow" title="收合/展開">▼</span>' +
-        '<span class="idx">、</span>' +
-        '<span class="title-text" contenteditable="true" spellcheck="false">' + name.replace(/</g, '&lt;') + '</span> ' +
-        '<span class="count">0項</span>' +
-        '<span class="section-del" title="刪除整個分類">🗑</span>' +
-      '</div>' +
-      '<div class="grid" data-section="' + key + '"></div>' +
-      '<button class="btn-add-item" data-section="' + key + '">+ 新增項目</button>';
+    var block = createSectionBlock(key, name);
     document.querySelector('.wrap').appendChild(block);
     wireSectionBlock(block);
+    block.dataset.wired = '1';
     renumberSections();
     saveTitles();
+    saveSections();
+    if (typeof populateBulkSelect === 'function') populateBulkSelect(); // 修復：新分類要立刻出現在批量搬移下拉選單，不用等重新切換模式
     toast('已新增「' + name + '」分類，接著可以按「+ 新增項目」加內容');
   }
 
@@ -570,6 +619,7 @@
     document.removeEventListener('mouseup', onMouseUp);
   }
 
+  restoreCustomSections(); // 先把本機記得的自訂分類殼補回來，applyLayout才有地方可以放項目
   applyLayout();
   applyTitles();
   applyBadges();
@@ -579,12 +629,14 @@
   // 先用本機localStorage/預設HTML快速畫出畫面，伺服器最新狀態拉到後再套用一次校正
   // （教練在別台裝置改過排版時，這裡會把畫面更新成最新版，不用手動重新整理）
   pullStateFromServer().then(function(){
+    restoreCustomSections(); // 另一台裝置新增的自訂分類，這裡補建
     applyLayout();
     applyTitles();
     applyBadges();
     applyCollapse();
     applyNames();
     document.querySelectorAll('.grid').forEach(renumber);
+    wireAllSectionBlocks(); // 補建出來的分類要接上刪除/收合/改名事件
   });
 
   var toastEl = document.getElementById('toast');
@@ -595,10 +647,7 @@
   }
 
   document.querySelectorAll('.item').forEach(wireItem);
-  document.querySelectorAll('.section-block').forEach(function(block){
-    if (block.id === 'recycleBinBlock') return; // 最近刪除用專屬邏輯初始化，不套一般分類的刪除/改名
-    wireSectionBlock(block);
-  });
+  wireAllSectionBlocks();
 
   document.querySelectorAll('.grid').forEach(renumber);
 
