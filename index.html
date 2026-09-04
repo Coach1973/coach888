@@ -217,7 +217,10 @@
       });
       fetch(SYNC_ENDPOINT, {
         method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
-      }).catch(function(){});
+      }).then(function(r){
+        if (r.ok) toast('✅ 已同步（剛剛）');
+        else toast('⚠️ 同步失敗，稍後會自動重試');
+      }).catch(function(){ toast('⚠️ 同步失敗，稍後會自動重試'); });
     }, 400);
   }
   function pullStateFromServer(){
