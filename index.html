@@ -130,6 +130,15 @@
     .url { display:none; }
     .name { font-size:15px; }
   }
+  .hot-ranking-block { break-inside:avoid; -webkit-column-break-inside:avoid; display:inline-block; width:100%; }
+  .hot-ranking-title { display:flex; align-items:center; gap:10px; margin:0 0 16px; font-size:20px; font-weight:900; color:var(--gold); }
+  .hot-ranking-sub { font-size:13px; color:rgba(255,255,255,.4); font-weight:700; }
+  .hot-grid { display:flex; flex-direction:column; gap:8px; }
+  .hot-item { display:flex; align-items:center; gap:12px; color:#fff; background:var(--dark2); border:1px solid var(--gold); border-radius:10px; padding:10px 14px; }
+  .hot-item:hover { background:#1a1a1a; }
+  .hot-rank { flex-shrink:0; width:30px; height:30px; border-radius:8px; background:rgba(200,169,110,.2); display:flex; align-items:center; justify-content:center; font-weight:900; font-size:14px; color:var(--gold); }
+  .hot-clicks { font-size:12px; color:rgba(255,255,255,.4); flex-shrink:0; white-space:nowrap; }
+  .hot-empty { font-size:13px; color:rgba(255,255,255,.35); padding:6px 4px; }
 </style>
 </head>
 <body>
@@ -140,6 +149,10 @@
 <button class="btn-copy" id="btnCopy">📋 複製目前排序（貼給AI固化進正式檔案）</button>
 <button class="btn-add-section" id="btnAddSection">➕ 新增分類</button>
 <button class="btn-add-section" id="btnBulkMode">☑️ 批量搬移模式</button>
+</div>
+<div class="hot-ranking-block" id="hotRankingBlock">
+<div class="hot-ranking-title">🔥 熱門排行 <span class="hot-ranking-sub">依點擊次數即時排名，不影響原本分類位置</span></div>
+<div class="hot-grid" id="hotRankingGrid"><div class="hot-empty">還沒有點擊紀錄，累積使用後這裡會自動排出你最常點的項目。</div></div>
 </div>
 <div class="section-block">
 <div class="section-title" data-section="changyong"><span class="toggle-arrow" title="收合/展開">▼</span><span class="section-drag-handle" title="拖曳調整分類順序">⠿</span><span class="title-text" contenteditable="true" spellcheck="false">大樹常用</span> <span class="count">16項</span><span class="section-del" title="刪除整個分類">🗑</span></div>
@@ -227,6 +240,72 @@
     return fetch(SYNC_ENDPOINT).then(function(r){ return r.json(); }).then(function(state){
       [LAYOUT_KEY, TITLES_KEY, BADGES_KEY, NAMES_KEY, COLLAPSE_KEY, SECTIONS_KEY, SECTION_ORDER_KEY].forEach(function(k){
         if (state[k] != null) localStorage.setItem(k, state[k]);
+      });
+    }).catch(function(){});
+  }
+
+  // ── 熱門排行(2026-09-18教練交辦)：依實際點擊次數自動排出常用項目，不用每次在
+  // 一堆手動整理的分類裡找。獨立於原本layout/section機制之外運作(不用.grid/.item
+  // class、不進saveLayout()的querySelectorAll('.grid')掃描範圍)，純新增不動既有排版。
+  var CLICK_ENDPOINT = 'https://event.bymyway.com/api/coach888/click';
+  var CLICK_COUNTS_ENDPOINT = 'https://event.bymyway.com/api/coach888/click-counts';
+  var HOT_RANKING_TOP_N = 10;
+
+  function trackClick(url){
+    if (!url) return;
+    try {
+      var blob = new Blob([JSON.stringify({url: url})], {type: 'application/json'});
+      if (navigator.sendBeacon) navigator.sendBeacon(CLICK_ENDPOINT, blob);
+      else fetch(CLICK_ENDPOINT, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({url:url}), keepalive:true});
+    } catch(e){}
+  }
+
+  // 用capture監聽、不call preventDefault/stopPropagation，完全不干擾原本的連結開啟行為
+  document.addEventListener('click', function(e){
+    var link = e.target.closest('a.name');
+    if (!link) return;
+    var container = link.closest('[data-url]');
+    trackClick(container ? container.dataset.url : link.getAttribute('href'));
+  }, true);
+
+  function loadHotRanking(){
+    var grid = document.getElementById('hotRankingGrid');
+    if (!grid) return;
+    fetch(CLICK_COUNTS_ENDPOINT).then(function(r){ return r.json(); }).then(function(counts){
+      var entries = Object.keys(counts).map(function(u){ return {url: u, count: counts[u]}; })
+        .filter(function(e){ return e.count > 0; })
+        .sort(function(a,b){ return b.count - a.count; })
+        .slice(0, HOT_RANKING_TOP_N);
+      if (!entries.length) return; // 保留HTML原本「還沒有點擊紀錄」的提示文字
+      var urlToItem = {};
+      document.querySelectorAll('.item[data-url]').forEach(function(it){ urlToItem[it.dataset.url] = it; });
+      grid.innerHTML = '';
+      entries.forEach(function(entry, i){
+        var src = urlToItem[entry.url];
+        if (!src) return; // 對應項目已被刪除，不顯示殘影
+        var nameEl = src.querySelector('.name');
+        var urlEl = src.querySelector('.url');
+        var badgeEl = src.querySelector('.badge');
+        var item = document.createElement('div');
+        item.className = 'hot-item';
+        item.dataset.url = entry.url;
+        var rank = document.createElement('div');
+        rank.className = 'hot-rank'; rank.textContent = i + 1;
+        var a = document.createElement('a');
+        a.className = 'name'; a.href = entry.url; a.target = '_blank';
+        a.textContent = nameEl ? nameEl.textContent : entry.url;
+        var urlDiv = document.createElement('div');
+        urlDiv.className = 'url'; urlDiv.textContent = urlEl ? urlEl.textContent : '';
+        item.appendChild(rank); item.appendChild(a); item.appendChild(urlDiv);
+        if (badgeEl) {
+          var badge = document.createElement('div');
+          badge.className = badgeEl.className; badge.textContent = badgeEl.textContent;
+          item.appendChild(badge);
+        }
+        var clicks = document.createElement('div');
+        clicks.className = 'hot-clicks'; clicks.textContent = '點擊 ' + entry.count + ' 次';
+        item.appendChild(clicks);
+        grid.appendChild(item);
       });
     }).catch(function(){});
   }
@@ -713,6 +792,7 @@
     applyNames();
     document.querySelectorAll('.grid').forEach(renumber);
     wireAllSectionBlocks(); // 補建出來的分類要接上刪除/收合/改名事件
+    loadHotRanking(); // 跨裝置排版校正完成、項目都已就位後再抓一次最新點擊排行
   });
 
   var toastEl = document.getElementById('toast');
@@ -724,6 +804,7 @@
 
   document.querySelectorAll('.item').forEach(wireItem);
   wireAllSectionBlocks();
+  loadHotRanking(); // 先用本機layout畫一次，跨裝置校正完成後上面那份會再刷新一次
 
   document.querySelectorAll('.grid').forEach(renumber);
 
