@@ -219,23 +219,46 @@
   // 教練在Mac改完、ACER開起來還是舊版。改成save時順便推到伺服器、load時先拉伺服器最新值，
   // 伺服器連不上時退回原本的localStorage行為，不影響離線可用性。
   var SYNC_ENDPOINT = 'https://event.bymyway.com/api/coach888/state';
+  var SYNC_KEYS = [LAYOUT_KEY, TITLES_KEY, BADGES_KEY, NAMES_KEY, COLLAPSE_KEY, SECTIONS_KEY, SECTION_ORDER_KEY];
   var _syncTimer = null;
+  var _syncDirty = false; // 上一次debounce送出的payload是否已經確定送達，避免離頁時beacon補送已經送過的舊值
+  function buildSyncPayload(){
+    var payload = {};
+    SYNC_KEYS.forEach(function(k){
+      var v = localStorage.getItem(k);
+      if (v != null) payload[k] = v;
+    });
+    return payload;
+  }
   function syncStateToServer(){
+    _syncDirty = true;
     clearTimeout(_syncTimer);
     _syncTimer = setTimeout(function(){
-      var payload = {};
-      [LAYOUT_KEY, TITLES_KEY, BADGES_KEY, NAMES_KEY, COLLAPSE_KEY, SECTIONS_KEY, SECTION_ORDER_KEY].forEach(function(k){
-        var v = localStorage.getItem(k);
-        if (v != null) payload[k] = v;
-      });
       fetch(SYNC_ENDPOINT, {
-        method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
+        method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(buildSyncPayload())
       }).then(function(r){
+        _syncDirty = false;
         if (r.ok) toast('✅ 已同步（剛剛）');
         else toast('⚠️ 同步失敗，稍後會自動重試');
       }).catch(function(){ toast('⚠️ 同步失敗，稍後會自動重試'); });
     }, 400);
   }
+  // 2026-09-19修復：400ms防手震debounce送出前若使用者就切頁/重新整理，這個setTimeout
+  // 會直接被瀏覽器捨棄，最後一兩個動作永遠沒送到伺服器——下次載入時pullStateFromServer()
+  // 會用伺服器上「稍舊」的版本蓋掉使用者剛做的本機修改，看起來就像「改的東西全部恢復原樣」。
+  // beforeunload/pagehide用sendBeacon立即補送一次目前最新狀態，不受debounce拖延，
+  // sendBeacon保證離頁當下仍會送出且不阻塞導覽。
+  function flushSyncOnLeave(){
+    if (!_syncDirty) return;
+    clearTimeout(_syncTimer);
+    try {
+      var blob = new Blob([JSON.stringify(buildSyncPayload())], {type: 'application/json'});
+      navigator.sendBeacon(SYNC_ENDPOINT, blob);
+      _syncDirty = false;
+    } catch(e){}
+  }
+  window.addEventListener('pagehide', flushSyncOnLeave);
+  window.addEventListener('beforeunload', flushSyncOnLeave);
   function pullStateFromServer(){
     return fetch(SYNC_ENDPOINT).then(function(r){ return r.json(); }).then(function(state){
       [LAYOUT_KEY, TITLES_KEY, BADGES_KEY, NAMES_KEY, COLLAPSE_KEY, SECTIONS_KEY, SECTION_ORDER_KEY].forEach(function(k){
