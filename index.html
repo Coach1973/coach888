@@ -213,13 +213,15 @@
   var NAMES_KEY = 'coach888_names';
   var SECTIONS_KEY = 'coach888_sections';
   var SECTION_ORDER_KEY = 'coach888_section_order';
+  var ITEMS_KEY = 'coach888_items'; // 2026-09-19新增：用「+新增項目」建立的全新項目本體(name/badge)，
+  // 讓其他裝置能真的生出這個項目的DOM，不是只同步已存在項目的排序/標題/標籤。
   var CHINESE_NUM = ['一','二','三','四','五','六','七','八','九','十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十'];
 
   // ── 跨裝置同步(2026-09-03交辦)：原本排版只存在單一瀏覽器的localStorage，
   // 教練在Mac改完、ACER開起來還是舊版。改成save時順便推到伺服器、load時先拉伺服器最新值，
   // 伺服器連不上時退回原本的localStorage行為，不影響離線可用性。
   var SYNC_ENDPOINT = 'https://event.bymyway.com/api/coach888/state';
-  var SYNC_KEYS = [LAYOUT_KEY, TITLES_KEY, BADGES_KEY, NAMES_KEY, COLLAPSE_KEY, SECTIONS_KEY, SECTION_ORDER_KEY];
+  var SYNC_KEYS = [LAYOUT_KEY, TITLES_KEY, BADGES_KEY, NAMES_KEY, COLLAPSE_KEY, SECTIONS_KEY, SECTION_ORDER_KEY, ITEMS_KEY];
   var _syncTimer = null;
   var _syncDirty = false; // 上一次debounce送出的payload是否已經確定送達，避免離頁時beacon補送已經送過的舊值
   function buildSyncPayload(){
@@ -261,7 +263,7 @@
   window.addEventListener('beforeunload', flushSyncOnLeave);
   function pullStateFromServer(){
     return fetch(SYNC_ENDPOINT).then(function(r){ return r.json(); }).then(function(state){
-      [LAYOUT_KEY, TITLES_KEY, BADGES_KEY, NAMES_KEY, COLLAPSE_KEY, SECTIONS_KEY, SECTION_ORDER_KEY].forEach(function(k){
+      SYNC_KEYS.forEach(function(k){
         if (state[k] != null) localStorage.setItem(k, state[k]);
       });
     }).catch(function(){});
@@ -599,6 +601,54 @@
     nameEl.insertAdjacentElement('afterend', icon);
   }
 
+  // 2026-09-19新增：項目本體(名稱/網址/標籤)可能是「+新增項目」現場建立的，
+  // 其他裝置的原始HTML裡根本沒有這個data-url，光同步layout排序陣列裡的一個url字串
+  // 沒有用——那邊完全沒有東西可以搬。materializeMissingItems()負責把itemsMeta記得的
+  // 項目在當下這台裝置實際生出DOM，其餘裝置才會真的「看得到」而不是排序表裡多一個
+  // 查無此人的幽靈url。
+  function createItemElement(url, name, badge){
+    var item = document.createElement('div');
+    item.className = 'item';
+    item.dataset.url = url;
+    item.innerHTML = '<span class="drag-handle">⠿</span>' +
+      '<div class="num">0</div>' +
+      '<a class="name" href="' + url.replace(/"/g, '&quot;') + '" target="_blank">' + (name || url).replace(/</g, '&lt;') + '</a>' +
+      '<div class="url">' + url.replace(/</g, '&lt;') + '</div>' +
+      '<div class="badge star" contenteditable="true" spellcheck="false">' + (badge || '').replace(/</g, '&lt;') + '</div>' +
+      '<span class="item-del" title="刪除這個項目">✕</span>';
+    return item;
+  }
+
+  function loadItemsMeta(){
+    var raw = localStorage.getItem(ITEMS_KEY);
+    if (!raw) return {};
+    try { return JSON.parse(raw); } catch(e){ return {}; }
+  }
+
+  function saveItemMeta(url, name, badge){
+    var meta = loadItemsMeta();
+    meta[url] = { name: name, badge: badge };
+    localStorage.setItem(ITEMS_KEY, JSON.stringify(meta));
+    syncStateToServer();
+  }
+
+  function materializeMissingItems(layout){
+    var meta = loadItemsMeta();
+    var allItems = {};
+    document.querySelectorAll('.item').forEach(function(it){ allItems[it.dataset.url] = it; });
+    Object.keys(layout).forEach(function(section){
+      var grid = document.querySelector('.grid[data-section="' + section + '"]');
+      if (!grid) return; // 該分類殼本身還沒建出來(等restoreCustomSections先補)，下一輪applyLayout再處理
+      layout[section].forEach(function(url){
+        if (allItems[url] || !meta[url]) return; // 已存在的項目、或連meta都查無資料(理論上不會發生)，跳過
+        var item = createItemElement(url, meta[url].name, meta[url].badge);
+        grid.appendChild(item);
+        wireItem(item);
+        allItems[url] = item;
+      });
+    });
+  }
+
   function addItem(grid){
     var name = prompt('項目名稱？');
     if (name === null || name.trim() === '') return;
@@ -608,21 +658,14 @@
     if (badge === null) badge = '';
     name = name.trim(); url = url.trim(); badge = badge.trim();
 
-    var item = document.createElement('div');
-    item.className = 'item';
-    item.dataset.url = url;
-    item.innerHTML = '<span class="drag-handle">⠿</span>' +
-      '<div class="num">0</div>' +
-      '<a class="name" href="' + url.replace(/"/g, '&quot;') + '" target="_blank">' + name.replace(/</g, '&lt;') + '</a>' +
-      '<div class="url">' + url.replace(/</g, '&lt;') + '</div>' +
-      '<div class="badge star" contenteditable="true" spellcheck="false">' + badge.replace(/</g, '&lt;') + '</div>' +
-      '<span class="item-del" title="刪除這個項目">✕</span>';
+    var item = createItemElement(url, name, badge);
     grid.appendChild(item);
     wireItem(item);
     renumber(grid);
     saveLayout();
     saveBadges();
-    toast('已新增「' + name + '」，記得按上方複製排序貼給AI固化');
+    saveItemMeta(url, name, badge);
+    toast('已新增「' + name + '」，其他裝置重新整理就會同步看到');
   }
 
   function wireSectionBlock(block){
@@ -684,6 +727,7 @@
   function applyLayout(){
     var layout = loadLayout();
     if (!layout) return;
+    materializeMissingItems(layout); // 先把其他裝置新增、這裡還沒有DOM的項目生出來，才搬得動
     var allItems = {};
     document.querySelectorAll('.item').forEach(function(it){ allItems[it.dataset.url] = it; });
     document.querySelectorAll('.grid').forEach(function(grid){
