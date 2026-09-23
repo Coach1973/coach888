@@ -98,6 +98,11 @@
     padding:0 2px; transition:color .2s;
   }
   .item-del:hover { color:#ff6b6b; }
+  .hot-item-del {
+    cursor:pointer; flex-shrink:0; color:rgba(255,255,255,.3); font-size:16px; font-weight:900;
+    padding:0 2px; transition:color .2s;
+  }
+  .hot-item-del:hover { color:#ff6b6b; }
   .btn-add-item {
     display:block; width:100%; margin-top:6px; background:transparent; border:1px dashed var(--line);
     color:rgba(255,255,255,.4); border-radius:10px; padding:8px 14px; font-size:13px; font-weight:700;
@@ -287,6 +292,12 @@
   var CLICK_COUNTS_ENDPOINT = 'https://event.bymyway.com/api/coach888/click-counts';
   var HOT_RANKING_TOP_N = 10;
 
+  function removeFromHotRanking(url){
+    return fetch(CLICK_COUNTS_ENDPOINT, {
+      method: 'DELETE', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({url: url})
+    });
+  }
+
   function trackClick(url){
     if (!url) return;
     try {
@@ -341,6 +352,16 @@
         var clicks = document.createElement('div');
         clicks.className = 'hot-clicks'; clicks.textContent = '點擊 ' + entry.count + ' 次';
         item.appendChild(clicks);
+        var del = document.createElement('span');
+        del.className = 'hot-item-del'; del.title = '從熱門排行移除（不影響原分類項目本身）'; del.textContent = '✕';
+        del.addEventListener('click', function(ev){
+          ev.preventDefault(); ev.stopPropagation();
+          removeFromHotRanking(entry.url).then(function(){
+            item.remove();
+            toast('已從熱門排行移除「' + a.textContent + '」');
+          }).catch(function(){ toast('⚠️ 移除失敗，稍後再試'); });
+        });
+        item.appendChild(del);
         grid.appendChild(item);
       });
     }).catch(function(){});
